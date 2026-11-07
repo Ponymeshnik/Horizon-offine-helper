@@ -18,7 +18,7 @@ $helperDist = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $helperDist -Force | Out-Null
 $helperArchive = Join-Path $helperDist ('Horizon-offine-helper-' + $helperVersion + '-windows.zip')
 $helperFiles = @($helperExecutable)
-foreach ($helperName in @('README.md', 'LICENSE', 'CHANGELOG.md', 'Как пользоваться.txt')) {
+foreach ($helperName in @('README.md', 'README.ru.md', 'LICENSE', 'CHANGELOG.md', 'Как пользоваться.txt', 'docs')) {
     $helperFiles += Join-Path $PSScriptRoot $helperName
 }
 Compress-Archive -LiteralPath $helperFiles -DestinationPath $helperArchive -Force

@@ -1,82 +1,86 @@
 # Horizon-offine-helper
 
-Неофициальный помощник для Windows: выберите папку с Minecraft **26.3**, и программа подготовит ресурсы для [Horizon](https://playhorizon.dev/) и запустит игру.
+English | [Русский](README.ru.md)
 
-Подойдёт папка лаунчера, отдельного экземпляра или самой версии. Программа ищет оригинальный клиент по размеру и SHA-1, поэтому не привязана к названию лаунчера или имени JAR-файла.
+An unofficial Windows helper that prepares and launches [Horizon](https://playhorizon.dev/) using your existing **Minecraft 26.3** files.
 
-## Возможности
+Select a launcher folder, an instance folder, or the version folder itself. The helper identifies the original client by its file size and SHA-1 hash, so it does not depend on a specific launcher name or JAR filename.
 
-- Поиск клиента во вложенных папках и общих хранилищах лаунчеров.
-- Подготовка библиотек и ресурсов через официальный Horizon Launcher.
-- Загрузка недостающих файлов с серверов Mojang и официальных релизов Horizon.
-- Проверка контрольных сумм загружаемых файлов.
-- Поиск установленного JDK 25 и создание ярлыка для повторного запуска.
-- Отмена подготовки и просмотр подробностей в окне программы.
+## Features
 
-## Запуск
+- Finds the original client in nested folders and shared launcher libraries.
+- Prepares libraries and resources through the official Horizon Launcher.
+- Downloads missing files from Mojang servers and official Horizon releases.
+- Verifies downloaded file hashes.
+- Detects an installed JDK 25 and creates a desktop shortcut for future launches.
+- Provides cancellation and preparation details in the application window.
 
-1. Скачайте ZIP для Windows из раздела **Releases** этого репозитория и распакуйте его.
-2. Откройте `Horizon-offine-helper.exe`.
-3. Нажмите **«Выбрать…»** и укажите папку с установленным Minecraft 26.3.
-4. Нажмите **«Подготовить и играть»**. Первая подготовка может занять несколько минут.
+## Getting started
 
-После подготовки используйте кнопку **«Играть»** или ярлык **«Horizon 26.3»** на рабочем столе.
+The application interface is currently in Russian. The steps below include translations of the button labels.
 
-Требуются Windows 10/11 x64 и .NET Framework 4.8. При первой подготовке нужен интернет. Установленный Horizon используется автоматически; при его отсутствии помощник скачает официальный launcher. Если подходящий JDK 25 не найден, его подготовкой занимается Horizon Launcher.
+1. Download the Windows ZIP from this repository's **Releases** section and extract it.
+2. Open `Horizon-offine-helper.exe`.
+3. Click **«Выбрать…» (Browse)** and select a folder containing Minecraft 26.3.
+4. Click **«Подготовить и играть» (Prepare and play)**. Initial preparation may take several minutes.
 
-## Совместимость
+For subsequent launches, use **«Играть» (Play)** or the **Horizon 26.3** desktop shortcut.
 
-Текущая версия рассчитана на **Minecraft 26.3** и совместимую сборку Horizon. Проверены поиск и подготовка из Prism Launcher, а также поиск переименованного оригинального клиента в произвольной вложенной папке. Затем проверен запуск главного меню Horizon.
+Requires **Windows 10/11 x64** and **.NET Framework 4.8**. An internet connection is needed during initial preparation. The helper uses an existing Horizon installation when available; otherwise, it downloads the official launcher. If it cannot find a suitable JDK 25, Horizon Launcher handles Java setup.
 
-Для других лаунчеров используется тот же поиск по контрольной сумме. Нужен оригинальный JAR 26.3: изменённый клиент или другая версия проверку не пройдут. Поиск ограничен девятью уровнями вложенности и 10 000 папок; выбирайте папку лаунчера или экземпляра, а не целый диск.
+## Compatibility
 
-Forge/Fabric-моды из выбранного экземпляра автоматически в Horizon не переносятся. Состав поддерживаемых игровых возможностей определяется самим Horizon.
+This version supports **Minecraft 26.3** and a compatible Horizon build. Client discovery and preparation have been tested with Prism Launcher and with an original client renamed and placed in an arbitrary nested folder. Horizon startup was then verified at the main menu.
 
-## Данные и устранение ошибок
+Other launchers use the same hash-based discovery. The original Minecraft 26.3 JAR is required: modified clients and other game versions will not pass verification. The search is limited to nine levels of nesting and 10,000 folders. Select a launcher or instance folder rather than an entire drive.
 
-| Назначение | Папка |
+Forge/Fabric mods from the selected instance are not automatically ported to Horizon. Supported game features depend on Horizon itself.
+
+## Data and troubleshooting
+
+| Purpose | Location |
 | --- | --- |
-| Настройки, подготовленные входные файлы и журнал помощника | `%LOCALAPPDATA%\HorizonFolderHelper` |
-| Миры и настройки игры | `%APPDATA%\horizon` |
-| Сборки и ресурсы Horizon | `%APPDATA%\horizon-launcher` |
+| Helper settings, prepared input files, and logs | `%LOCALAPPDATA%\HorizonFolderHelper` |
+| Game worlds and settings | `%APPDATA%\horizon` |
+| Horizon builds and resources | `%APPDATA%\horizon-launcher` |
 
-Входные файлы читаются из выбранной папки. Для неизменяемых файлов помощник создаёт жёсткие ссылки, когда это возможно; на другом диске копирует их. Файлы исходного лаунчера помощник не редактирует.
+The helper reads input files from the selected folder. It uses hard links for immutable files where possible and copies them when the destination is on another drive. It does not edit the source launcher's files.
 
-- **Клиент не найден:** скачайте и запустите 26.3 в исходном лаунчере, затем выберите папку экземпляра или общую папку лаунчера.
-- **Подготовка завершилась ошибкой:** откройте **«Подробности»**; журнал находится в `helper.log` в папке помощника.
-- **Новая сборка Horizon несовместима:** требуется сборка, в `research-lock.json` которой указана версия Minecraft 26.3.
-- **Повторный запуск не работает:** выполните подготовку снова, если переносили или удаляли файлы Horizon.
+- **Client not found:** download and launch 26.3 in your original launcher, then select its instance folder or shared launcher folder.
+- **Preparation failed:** open **«Подробности» (Details)**. The log is saved as `helper.log` in the helper's data folder.
+- **A newer Horizon build is incompatible:** use a build whose `research-lock.json` specifies Minecraft 26.3.
+- **Launching a prepared game fails:** run preparation again if you have moved or deleted Horizon files.
 
-Для удаления уберите EXE и ярлык. При желании можно отдельно удалить папку данных помощника. Миры хранятся в отдельной папке игры.
+To uninstall, remove the EXE and desktop shortcut. You can also remove the helper's data folder if desired. Game worlds are stored separately in the game folder.
 
-Перед прикреплением журнала к публичной задаче уберите из него личные пути и другие личные данные.
+Remove personal paths and other private information before attaching logs to a public issue.
 
-## Сборка из исходников
+## Building from source
 
-Достаточно Windows, PowerShell и .NET Framework 4.8; Visual Studio и сторонние пакеты не нужны.
+You need Windows, PowerShell, and .NET Framework 4.8. Visual Studio and third-party packages are not required.
 
 ```powershell
 .\build.ps1 -Test
 ```
 
-Готовый файл появится в `bin\Horizon-offine-helper.exe`. Параметр `-Test` запускает встроенные проверки поиска файлов, контрольных сумм, путей, распаковки ZIP, аргументов Windows, ярлыков и отмены дочернего процесса. Проверки работают с временными тестовыми данными, не скачивают игру и не запускают её.
+The executable is written to `bin\Horizon-offine-helper.exe`. The `-Test` option runs the built-in checks for file discovery, hashes, path handling, ZIP extraction, Windows arguments, shortcuts, and child-process cancellation. These checks use temporary test data; they do not download or launch the game.
 
-Для сборки архива релиза:
+To create a release package:
 
 ```powershell
 .\package.ps1
 ```
 
-Архив и его SHA-256 появятся в `dist`. Настроенный GitHub Actions выполняет сборку, встроенные проверки и упаковку на Windows, затем сохраняет результат как артефакт. Реальный запуск игры проверяется отдельно на машине с установленным Minecraft/Horizon.
+The archive and its SHA-256 checksum are written to `dist`. The included GitHub Actions workflow builds the application, runs the built-in checks, and uploads a Windows package as an artifact. Actual game startup is verified separately on a machine with Minecraft and Horizon installed.
 
-Порядок публикации описан в [docs/PUBLISHING.md](docs/PUBLISHING.md). Изменения — в [CHANGELOG.md](CHANGELOG.md).
+See the [publishing guide (Russian)](docs/PUBLISHING.md) and [changelog (Russian)](CHANGELOG.md).
 
-## Лицензия и благодарности
+## License and credits
 
-Код этого помощника распространяется по [лицензии MIT](LICENSE).
+The helper's code is distributed under the [MIT License](LICENSE).
 
-Horizon, Minecraft, Java и их ресурсы распространяются отдельно на своих условиях. Их исполняемые файлы, игровые данные и декомпилированный код в этот репозиторий и архив релиза не включены.
+Horizon, Minecraft, Java, and their resources are distributed separately under their respective terms. Their executables, game data, and decompiled code are not included in this repository or release package.
 
-Спасибо команде [Horizon](https://github.com/horizon-rust/horizon) за клиент, launcher и инструменты подготовки. Minecraft принадлежит Mojang/Microsoft. Проект не является официальным продуктом этих команд.
+Thanks to the [Horizon team](https://github.com/horizon-rust/horizon) for the client, launcher, and preparation tools. Minecraft belongs to Mojang/Microsoft. This project is not an official product of either team.
 
-Помощник и документация созданы с участием OpenAI Codex. Проверки и подготовка выполнены на Windows; поддержка других лаунчеров зависит от наличия оригинальных файлов 26.3.
+The helper and documentation were developed with assistance from OpenAI Codex. Preparation and startup were verified on Windows; support for other launchers depends on the availability of original Minecraft 26.3 files.
