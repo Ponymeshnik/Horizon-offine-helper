@@ -1,0 +1,36 @@
+Horizon-offine-helper — PREPARE AND PLAY
+
+1. Open Horizon-offine-helper.exe.
+   On first launch, choose English or Русский. The choice is saved.
+   To change it later, use English / Русский in the main window.
+2. Click Browse… and select a folder containing Minecraft 26.3.
+   A launcher, instance, or version folder will work.
+3. Click Prepare and play and wait for preparation to finish.
+
+Next time, use Play or the Horizon 26.3 desktop shortcut.
+You can turn off shortcut creation using the checkbox.
+
+The helper identifies the original Minecraft 26.3 client by its hash.
+It can find the client in nested folders, regardless of the launcher name.
+If it cannot find the client, launch 26.3 in your original launcher first.
+
+When necessary, the helper downloads the official Horizon Launcher,
+a compatible Horizon build, and missing libraries/resources from Mojang.
+Initial preparation requires internet and may take several minutes.
+An installed JDK 25 is detected automatically; otherwise, Horizon Launcher
+handles Java setup.
+
+Helper data: %LOCALAPPDATA%\HorizonFolderHelper
+Game worlds and settings: %APPDATA%\horizon
+Horizon is launched as a standalone client.
+
+If preparation fails, open Details. Cancel stops preparation and its own
+child processes. Windows dialogs and external logs may use another language.
+
+Windows 10/11 x64, .NET Framework 4.8.
+Unofficial helper. Horizon: https://playhorizon.dev/
+Official Horizon files: https://github.com/horizon-rust/horizon
+
+Source code is available in the project repository. To build on Windows,
+open PowerShell in the source root and run .\build.ps1 -Test.
+The executable is written to bin. See README.md for details.

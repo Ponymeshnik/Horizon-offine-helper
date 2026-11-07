@@ -24,17 +24,19 @@ namespace HorizonFolderHelper {
         public readonly string Home;
         public readonly CancellationToken Cancel;
         readonly Action<string> log;
+        readonly Action<string> progress;
         readonly object logLock = new object();
         readonly JavaScriptSerializer json = new JavaScriptSerializer { MaxJsonLength = 64 * 1024 * 1024 };
         public string LauncherOverride;
         public bool PortableOnly;
-        public HelperCore(string home, Action<string> logger, CancellationToken cancel) {
-            Home = Path.GetFullPath(home); log = logger ?? delegate { }; Cancel = cancel;
+        public HelperCore(string home, Action<string> logger, CancellationToken cancel, Action<string> onProgress=null) {
+            Home = Path.GetFullPath(home); log = logger ?? delegate { }; Cancel = cancel; progress=onProgress;
             Directory.CreateDirectory(Home);
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
             ServicePointManager.DefaultConnectionLimit=Math.Max(ServicePointManager.DefaultConnectionLimit,6);
         }
         public void Say(string value) { lock(logLock) { log(value); File.AppendAllText(Path.Combine(Home,"helper.log"), DateTime.Now.ToString("s")+" "+value+Environment.NewLine, Encoding.UTF8); } }
+        void Report(string key,params object[] arguments) { string message=L.T(key,arguments); Say(message); if(progress!=null) progress(message); }
         public static string DefaultHome { get { return Environment.GetEnvironmentVariable("HORIZON_FOLDER_HELPER_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"HorizonFolderHelper"); } }
         public static string HorizonHome { get { return Environment.GetEnvironmentVariable("HORIZON_LAUNCHER_HOME") ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"horizon-launcher"); } }
         public static Dictionary<string,object> Obj(object value) { return value as Dictionary<string,object> ?? new Dictionary<string,object>(); }
@@ -44,10 +46,10 @@ namespace HorizonFolderHelper {
         public void WriteJson(string path,object value) { Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))); File.WriteAllText(path,json.Serialize(value),new UTF8Encoding(false)); }
         public static string Hash(string path,string algorithm) { using(var h=HashAlgorithm.Create(algorithm)) using(var f=File.OpenRead(path)) return BitConverter.ToString(h.ComputeHash(f)).Replace("-","").ToLowerInvariant(); }
         public static string SafeChild(string root,string relative) {
-            if(Path.IsPathRooted(relative)) throw new IOException("Неверный путь в описании файлов.");
+            if(Path.IsPathRooted(relative)) throw new IOException(L.T("InvalidFilePath"));
             string start=Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar;
             string result=Path.GetFullPath(Path.Combine(root,relative.Replace('/',Path.DirectorySeparatorChar)));
-            if(!result.StartsWith(start,StringComparison.OrdinalIgnoreCase)) throw new IOException("Путь выходит за пределы папки подготовки.");
+            if(!result.StartsWith(start,StringComparison.OrdinalIgnoreCase)) throw new IOException(L.T("PathEscape"));
             return result;
         }
         public static string Quote(string value) {
@@ -71,14 +73,14 @@ namespace HorizonFolderHelper {
                     Cancel.ThrowIfCancellationRequested();
                 }
                 process.WaitForExit();
-                if(process.ExitCode!=0) throw new IOException("Программа Horizon завершилась с ошибкой "+process.ExitCode+".\r\n"+errors.ToString()+output.ToString());
+                if(process.ExitCode!=0) throw new IOException(L.T("ProcessFailed",process.ExitCode)+"\r\n"+errors.ToString()+output.ToString());
             }
             return output.ToString();
         }
         byte[] GetBytes(string url) {
             Cancel.ThrowIfCancellationRequested();
-            if(!url.StartsWith("https://",StringComparison.OrdinalIgnoreCase)) throw new IOException("Разрешена только защищённая загрузка HTTPS.");
-            var request=(HttpWebRequest)WebRequest.Create(url); request.UserAgent="Horizon-offine-helper/1.0"; request.Timeout=90000; request.ReadWriteTimeout=90000;
+            if(!url.StartsWith("https://",StringComparison.OrdinalIgnoreCase)) throw new IOException(L.T("HttpsRequired"));
+            var request=(HttpWebRequest)WebRequest.Create(url); request.UserAgent="Horizon-offine-helper/1.1"; request.Timeout=90000; request.ReadWriteTimeout=90000;
             request.AutomaticDecompression=DecompressionMethods.GZip|DecompressionMethods.Deflate;
             using(Cancel.Register(delegate { request.Abort(); })) using(var response=request.GetResponse()) using(var stream=response.GetResponseStream()) using(var memory=new MemoryStream()) {
                 byte[] buffer=new byte[81920]; int count; while((count=stream.Read(buffer,0,buffer.Length))>0) { Cancel.ThrowIfCancellationRequested(); memory.Write(buffer,0,count); } return memory.ToArray();
@@ -88,7 +90,7 @@ namespace HorizonFolderHelper {
         void Download(string url,string target,string hash,string algorithm) {
             Directory.CreateDirectory(Path.GetDirectoryName(target));
             string temporary=target+".download-"+Guid.NewGuid().ToString("N");
-            try { File.WriteAllBytes(temporary,GetBytes(url)); if(!String.IsNullOrEmpty(hash) && !String.Equals(Hash(temporary,algorithm),hash,StringComparison.OrdinalIgnoreCase)) throw new IOException("Загруженный файл не прошёл проверку целостности: "+Path.GetFileName(target));
+            try { File.WriteAllBytes(temporary,GetBytes(url)); if(!String.IsNullOrEmpty(hash) && !String.Equals(Hash(temporary,algorithm),hash,StringComparison.OrdinalIgnoreCase)) throw new IOException(L.T("DownloadHashMismatch",Path.GetFileName(target)));
                 if(File.Exists(target)) File.Delete(target); File.Move(temporary,target);
             } finally { if(File.Exists(temporary)) File.Delete(temporary); }
         }
@@ -103,23 +105,23 @@ namespace HorizonFolderHelper {
             if(Directory.Exists(runtime)) candidates.AddRange(Directory.GetFiles(runtime,"horizon-launcher.exe",SearchOption.AllDirectories));
             string found=candidates.FirstOrDefault(File.Exists); if(found!=null) return Path.GetFullPath(found);
             if(!downloadIfMissing) return null;
-            Say("Скачиваю официальный Horizon Launcher…");
+            Report("DownloadLauncher");
             string assetName=Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE")=="ARM64" ? "horizon-launcher-windows-arm64.zip" : "horizon-launcher-windows-x64.zip";
             object releases=json.DeserializeObject(Encoding.UTF8.GetString(GetBytes("https://api.github.com/repos/horizon-rust/horizon/releases?per_page=30")));
             foreach(object release in (IEnumerable)releases) foreach(object a in Arr(Obj(release),"assets")) {
                 var asset=Obj(a); if(Str(asset,"name")!=assetName) continue;
-                string digest=Str(asset,"digest"); if(!digest.StartsWith("sha256:")) throw new IOException("У официального архива отсутствует контрольная сумма.");
+                string digest=Str(asset,"digest"); if(!digest.StartsWith("sha256:")) throw new IOException(L.T("MissingArchiveHash"));
                 string archive=Path.Combine(Home,"launcher.zip"); Download(Str(asset,"browser_download_url"),archive,digest.Substring(7),"SHA256");
                 string destination=Path.Combine(runtime,"launcher-"+Guid.NewGuid().ToString("N")); Directory.CreateDirectory(destination);
                 ExtractChecked(archive,destination); found=Directory.GetFiles(destination,"horizon-launcher.exe",SearchOption.AllDirectories).FirstOrDefault();
-                if(found==null) throw new IOException("В архиве Horizon не найден launcher."); return found;
+                if(found==null) throw new IOException(L.T("LauncherNotInArchive")); return found;
             }
-            throw new IOException("Не найден официальный архив Horizon для этой версии Windows.");
+            throw new IOException(L.T("NoLauncherArchive"));
         }
         public static void ExtractChecked(string archive,string destination) {
             using(var zip=ZipFile.OpenRead(archive)) foreach(var entry in zip.Entries) {
                 string target=SafeChild(destination,entry.FullName);
-                if((entry.ExternalAttributes>>16 & 0xF000)==0xA000) throw new IOException("Ссылки в архиве программы не поддерживаются.");
+                if((entry.ExternalAttributes>>16 & 0xF000)==0xA000) throw new IOException(L.T("ArchiveLinksUnsupported"));
                 if(entry.FullName.EndsWith("/")) { Directory.CreateDirectory(target); continue; }
                 Directory.CreateDirectory(Path.GetDirectoryName(target)); entry.ExtractToFile(target,false);
             }
@@ -134,8 +136,8 @@ namespace HorizonFolderHelper {
                 if(File.Exists(file) && File.Exists(Path.Combine(dir,"horizon-client.exe")) && Str(Obj(ReadJson(file)["minecraft"]),"version")==MinecraftVersion)
                     return new ReadyGame { Launcher=launcher,Version=tag,VersionDirectory=dir,Resources=Path.Combine(dir,".local","horizon-client",MinecraftVersion) };
             }
-            if(install) { Say("Устанавливаю официальную сборку Horizon…"); Run(launcher,new[]{"install","latest"},null,true); return FindGame(launcher,false); }
-            throw new IOException("Не найдена сборка Horizon для Minecraft 26.3. Установите совместимую версию через Horizon Launcher.");
+            if(install) { Report("InstallHorizon"); Run(launcher,new[]{"install","latest"},null,true); return FindGame(launcher,false); }
+            throw new IOException(L.T("NoCompatibleBuild"));
         }
         public static IEnumerable<string> Parents(string path) {
             var directory=new DirectoryInfo(Path.GetFullPath(path)); int count=0;
@@ -150,17 +152,17 @@ namespace HorizonFolderHelper {
             var candidates=new List<string> { Path.Combine(Home,"minecraft",MinecraftVersion,"versions",MinecraftVersion,MinecraftVersion+".json"),Path.Combine(HorizonHome,"linked-minecraft","versions",MinecraftVersion,MinecraftVersion+".json"),Path.Combine(HorizonHome,"minecraft","versions",MinecraftVersion,MinecraftVersion+".json") };
             foreach(string root in Parents(folder)) candidates.Add(Path.Combine(root,"versions",MinecraftVersion,MinecraftVersion+".json"));
             foreach(string candidate in candidates) if(File.Exists(candidate) && accepted.Contains(Hash(candidate,"SHA1"))) return ReadJson(candidate);
-            Say("Получаю описание Minecraft 26.3 с серверов Mojang…");
+            Report("FetchManifest");
             var index=GetJson("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
             var version=Arr(index,"versions").Select(Obj).FirstOrDefault(v=>Str(v,"id")==MinecraftVersion);
-            if(version==null || !accepted.Contains(Str(version,"sha1"))) throw new IOException("Описание Minecraft 26.3 обновилось. Нужна совместимая сборка Horizon.");
+            if(version==null || !accepted.Contains(Str(version,"sha1"))) throw new IOException(L.T("ManifestChanged"));
             string output=Path.Combine(Home,"minecraft",MinecraftVersion,"versions",MinecraftVersion,MinecraftVersion+".json");
             Download(Str(version,"url"),output,Str(version,"sha1"),"SHA1"); return ReadJson(output);
         }
         public string FindClient(string folder,string sha,long size) {
-            if(!Directory.Exists(folder)) throw new IOException("Выбранная папка не существует.");
-            if(new DirectoryInfo(Path.GetFullPath(folder)).Parent==null) throw new IOException("Выберите более конкретную папку с лаунчером или версией Minecraft 26.3.");
-            Say("Ищу файлы Minecraft 26.3…");
+            if(!Directory.Exists(folder)) throw new IOException(L.T("FolderMissing"));
+            if(new DirectoryInfo(Path.GetFullPath(folder)).Parent==null) throw new IOException(L.T("SelectSpecificFolder"));
+            Report("FindClient");
             var tried=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             Func<string,bool> matches=delegate(string file) { Cancel.ThrowIfCancellationRequested(); try { return tried.Add(file) && File.Exists(file) && new FileInfo(file).Length==size && Hash(file,"SHA1")==sha; } catch(IOException) {return false;} catch(UnauthorizedAccessException) {return false;} };
             foreach(string root in Parents(folder)) foreach(string suffix in new[]{"","meta","data","datastore","cache/minecraft"}) {
@@ -178,7 +180,7 @@ namespace HorizonFolderHelper {
                     if(item.Item2<9) foreach(string child in Directory.GetDirectories(item.Item1)) if(!skip.Contains(Path.GetFileName(child)) && (File.GetAttributes(child)&FileAttributes.ReparsePoint)==0) queue.Enqueue(Tuple.Create(child,item.Item2+1));
                 } catch(UnauthorizedAccessException) {} catch(IOException) {}
             }
-            throw new IOException("В этой папке не найден оригинальный клиент Minecraft 26.3. Можно выбрать папку лаунчера, экземпляра или самой версии. Если файлы ещё не скачаны, сначала запустите 26.3 один раз в вашем лаунчере.");
+            throw new IOException(L.T("ClientMissing"));
         }
         List<string> Stores(string folder,string jar,string kind) {
             var values=new List<string>(); foreach(string root in Roots(folder,jar)) foreach(string sub in new[]{kind,"meta/"+kind,"data/"+kind,"datastore/"+kind,"cache/minecraft/"+kind,"minecraft/"+kind,".minecraft/"+kind}) { string candidate=Path.Combine(root,sub.Replace('/',Path.DirectorySeparatorChar)); if(Directory.Exists(candidate)) values.Add(candidate); }
@@ -193,7 +195,7 @@ namespace HorizonFolderHelper {
                 if(File.Exists(target)) File.Delete(target);
                 if(!CreateHardLink(target,source,IntPtr.Zero)) File.Copy(source,target,false); return;
             }
-            if(String.IsNullOrEmpty(url)) throw new IOException("Не найден необходимый файл: "+Path.GetFileName(target));
+            if(String.IsNullOrEmpty(url)) throw new IOException(L.T("RequiredFileMissing",Path.GetFileName(target)));
             Download(url,target,sha,"SHA1");
         }
         public string Normalize(ReadyGame game,string folder,string jar,Dictionary<string,object> manifest) {
@@ -209,18 +211,18 @@ namespace HorizonFolderHelper {
                 foreach(string root in Roots(folder,jar)) candidates.Add(Path.Combine(root,"versions",MinecraftVersion,MinecraftVersion+".json"));
                 string source=candidates.FirstOrDefault(p=>File.Exists(p)&&pinHashes.Contains(Hash(p,"SHA1")));
                 if(source!=null) { if(File.Exists(manifestFile)) File.Delete(manifestFile); File.Copy(source,manifestFile); }
-                else throw new IOException("Не удалось сохранить проверенное описание версии. Повторите подготовку с подключением к интернету.");
+                else throw new IOException(L.T("ManifestSaveFailed"));
             }
             var libraryRoots=Stores(folder,jar,"libraries");
-            Say("Проверяю библиотеки Minecraft…");
+            Report("CheckLibraries");
             var libraries=Arr(manifest,"libraries").Select(Obj).ToArray(); int libraryCount=0;
             foreach(var lib in libraries) {
                 var downloads=Obj(lib.ContainsKey("downloads")?lib["downloads"]:null); var artifact=Obj(downloads.ContainsKey("artifact")?downloads["artifact"]:null);
                 string relative=Str(artifact,"path"); if(relative.Length==0) continue;
                 Materialize(libraryRoots.Select(r=>SafeChild(r,relative)),SafeChild(Path.Combine(stage,"libraries"),relative),Str(artifact,"sha1"),Str(artifact,"url"));
-                libraryCount++; if(libraryCount%10==0) Say("Библиотеки: "+libraryCount+" из "+libraries.Length);
+                libraryCount++; if(libraryCount%10==0) Report("LibraryProgress",libraryCount,libraries.Length);
             }
-            var asset=Obj(manifest["assetIndex"]); string assetId=Str(asset,"id"); if(!Regex.IsMatch(assetId,"^[A-Za-z0-9_.-]+$") || assetId.Contains("..")) throw new IOException("Неверный индекс ресурсов.");
+            var asset=Obj(manifest["assetIndex"]); string assetId=Str(asset,"id"); if(!Regex.IsMatch(assetId,"^[A-Za-z0-9_.-]+$") || assetId.Contains("..")) throw new IOException(L.T("InvalidAssetIndex"));
             var assetRoots=Stores(folder,jar,"assets"); string assetFile=Path.Combine(stage,"assets","indexes",assetId+".json");
             var acceptedAssets=new HashSet<string>(Arr(pins,"accepted_asset_index_sha1").Select(Convert.ToString),StringComparer.OrdinalIgnoreCase); acceptedAssets.Add(Str(asset,"sha1"));
             if(!File.Exists(assetFile) || !acceptedAssets.Contains(Hash(assetFile,"SHA1"))) {
@@ -230,12 +232,12 @@ namespace HorizonFolderHelper {
             }
             var objects=Obj(ReadJson(assetFile)["objects"]); int complete=0;
             var hashes=objects.Values.Select(value=>Str(Obj(value),"hash")).Distinct(StringComparer.Ordinal).ToArray();
-            Say("Подготавливаю звуки, шрифты и остальные ресурсы…");
+            Report("PrepareAssets");
             Parallel.ForEach(hashes,new ParallelOptions { MaxDegreeOfParallelism=4,CancellationToken=Cancel },delegate(string hash) {
-                if(!Regex.IsMatch(hash,"^[0-9a-f]{40}$")) throw new IOException("Неверная контрольная сумма ресурса.");
+                if(!Regex.IsMatch(hash,"^[0-9a-f]{40}$")) throw new IOException(L.T("InvalidAssetHash"));
                 string relative=hash.Substring(0,2)+"/"+hash;
                 Materialize(assetRoots.Select(r=>SafeChild(Path.Combine(r,"objects"),relative)),SafeChild(Path.Combine(stage,"assets","objects"),relative),hash,"https://resources.download.minecraft.net/"+relative);
-                int count=Interlocked.Increment(ref complete); if(count%500==0 || count==hashes.Length) Say("Ресурсы: "+count+" из "+hashes.Length);
+                int count=Interlocked.Increment(ref complete); if(count%500==0 || count==hashes.Length) Report("AssetProgress",count,hashes.Length);
             });
             return stage;
         }
@@ -254,25 +256,25 @@ namespace HorizonFolderHelper {
             return null;
         }
         public ReadyGame Prepare(string folder) {
-            folder=Path.GetFullPath(folder.Trim().Trim('"')); if(!Directory.Exists(folder)) throw new IOException("Выберите существующую папку с Minecraft 26.3.");
-            Say("Проверяю Horizon…"); string launcher=FindLauncher(true); ReadyGame game=FindGame(launcher,true);
+            folder=Path.GetFullPath(folder.Trim().Trim('"')); if(!Directory.Exists(folder)) throw new IOException(L.T("SelectMinecraftFolder"));
+            Report("CheckHorizon"); string launcher=FindLauncher(true); ReadyGame game=FindGame(launcher,true);
             var pins=Obj(ReadJson(Path.Combine(game.VersionDirectory,"research-lock.json"))["minecraft"]);
             var manifest=Manifest(game,folder); var client=Obj(Obj(manifest["downloads"])["client"]);
             game.SourceJar=FindClient(folder,Str(pins,"client_sha1"),Convert.ToInt64(client["size"])); game.SourceFolder=folder;
             string stage=Normalize(game,folder,game.SourceJar,manifest);
             game.JavaHome=FindJava(folder,game.SourceJar);
             var environment=new Dictionary<string,string>(); if(game.JavaHome!=null) { environment["JAVA_HOME"]=game.JavaHome; environment["PATH"]=Path.Combine(game.JavaHome,"bin")+Path.PathSeparator+Environment.GetEnvironmentVariable("PATH"); }
-            Say("Horizon подготавливает игровые данные. Это может занять несколько минут…");
+            Report("HorizonPreparing");
             Run(launcher,new[]{"prepare","--minecraft",stage,"--version",game.Version,"--json"},environment,true);
-            if(!File.Exists(Path.Combine(game.Resources,"horizon-resources.json"))) throw new IOException("Horizon завершил подготовку, но готовые ресурсы не найдены.");
-            WriteJson(Path.Combine(Home,"config.json"),game); Say("Готово. Horizon можно запускать."); return game;
+            if(!File.Exists(Path.Combine(game.Resources,"horizon-resources.json"))) throw new IOException(L.T("PreparedResourcesMissing"));
+            WriteJson(Path.Combine(Home,"config.json"),game); Report("PreparationDone"); return game;
         }
         public ReadyGame Saved() {
             string config=Path.Combine(Home,"config.json"); if(!File.Exists(config)) return null;
             try { return json.Deserialize<ReadyGame>(File.ReadAllText(config,Encoding.UTF8)); } catch {return null;}
         }
         public Process Launch(ReadyGame game,string testHome) {
-            if(game==null || !File.Exists(Path.Combine(game.VersionDirectory,"horizon-client.exe")) || !File.Exists(Path.Combine(game.Resources,"horizon-resources.json"))) throw new IOException("Сначала выберите папку и выполните подготовку.");
+            if(game==null || !File.Exists(Path.Combine(game.VersionDirectory,"horizon-client.exe")) || !File.Exists(Path.Combine(game.Resources,"horizon-resources.json"))) throw new IOException(L.T("PrepareFirst"));
             string gameHome=testHome ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"horizon"); Directory.CreateDirectory(gameHome);
             var arguments=new List<string> { "--resources",game.Resources,"--game-dir",gameHome };
             if(testHome!=null) arguments.AddRange(new[]{"--home",gameHome,"--frames","90","--smoke-report",Path.Combine(gameHome,"smoke.json"),"--width","960","--height","540"});

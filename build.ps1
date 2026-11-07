@@ -24,7 +24,7 @@ $compilerArguments = @(
     '/reference:System.Windows.Forms.dll', '/reference:System.Web.Extensions.dll',
     '/reference:System.IO.Compression.dll', '/reference:System.IO.Compression.FileSystem.dll',
     '/reference:Microsoft.CSharp.dll',
-    (Join-Path $helperSource 'HelperCore.cs'), (Join-Path $helperSource 'Program.cs')
+    (Join-Path $helperSource 'HelperCore.cs'), (Join-Path $helperSource 'Localization.cs'), (Join-Path $helperSource 'Program.cs')
 )
 & $helperCompiler @compilerArguments
 if ($LASTEXITCODE -ne 0) { throw 'Helper compilation failed.' }

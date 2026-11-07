@@ -6,7 +6,7 @@
 
 Описание для поля Description:
 
-> Windows helper that prepares and launches Horizon using existing Minecraft 26.3 files from other launchers. Russian UI. MIT licensed.
+> Windows helper that prepares and launches Horizon using existing Minecraft 26.3 files from other launchers. English and Russian UI. MIT licensed.
 
 Темы: `horizon`, `minecraft`, `launcher`, `windows`, `winforms`, `csharp`.
 
@@ -19,7 +19,7 @@
 
 [Официальная инструкция GitHub Desktop по добавлению локального репозитория](https://docs.github.com/en/desktop/adding-and-cloning-repositories/adding-a-repository-from-your-local-computer-to-github-desktop).
 
-## Первый релиз
+## Релиз 1.1.0
 
 Сборка:
 
@@ -27,11 +27,11 @@
 .\package.ps1
 ```
 
-На странице GitHub откройте **Releases → Draft a new release**. Укажите тег **v1.0.0**, целевую ветку **main**, название **Horizon-offine-helper 1.0.0**. Для описания используйте [RELEASE_NOTES.md](RELEASE_NOTES.md).
+На странице GitHub откройте **Releases → Draft a new release**. Укажите тег **v1.1.0**, целевую ветку **main**, название **Horizon-offine-helper 1.1.0**. Для описания используйте [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 Прикрепите только эти файлы из `dist`:
 
-- `Horizon-offine-helper-1.0.0-windows.zip`;
+- `Horizon-offine-helper-1.1.0-windows.zip`;
 - `SHA256SUMS.txt`.
 
 Исходный код GitHub добавит к релизу автоматически. Сборки Horizon, Minecraft, Java, ресурсы игры и локальные журналы прикреплять не требуется. Проверьте описание и файлы, затем опубликуйте релиз.

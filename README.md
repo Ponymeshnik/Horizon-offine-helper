@@ -14,17 +14,18 @@ Select a launcher folder, an instance folder, or the version folder itself. The 
 - Verifies downloaded file hashes.
 - Detects an installed JDK 25 and creates a desktop shortcut for future launches.
 - Provides cancellation and preparation details in the application window.
+- English and Russian interfaces, with a language picker on first launch and a saved preference.
 
 ## Getting started
 
-The application interface is currently in Russian. The steps below include translations of the button labels.
+On first launch, choose **English** or **Русский**. English is selected by default, and your choice is saved. You can change it later using **English / Русский** in the top-right corner of the main window.
 
 1. Download the Windows ZIP from this repository's **Releases** section and extract it.
 2. Open `Horizon-offine-helper.exe`.
-3. Click **«Выбрать…» (Browse)** and select a folder containing Minecraft 26.3.
-4. Click **«Подготовить и играть» (Prepare and play)**. Initial preparation may take several minutes.
+3. Click **Browse…** and select a folder containing Minecraft 26.3.
+4. Click **Prepare and play**. Initial preparation may take several minutes.
 
-For subsequent launches, use **«Играть» (Play)** or the **Horizon 26.3** desktop shortcut.
+For subsequent launches, use **Play** or the **Horizon 26.3** desktop shortcut. The shortcut launches an already prepared game directly.
 
 Requires **Windows 10/11 x64** and **.NET Framework 4.8**. An internet connection is needed during initial preparation. The helper uses an existing Horizon installation when available; otherwise, it downloads the official launcher. If it cannot find a suitable JDK 25, Horizon Launcher handles Java setup.
 
@@ -47,13 +48,15 @@ Forge/Fabric mods from the selected instance are not automatically ported to Hor
 The helper reads input files from the selected folder. It uses hard links for immutable files where possible and copies them when the destination is on another drive. It does not edit the source launcher's files.
 
 - **Client not found:** download and launch 26.3 in your original launcher, then select its instance folder or shared launcher folder.
-- **Preparation failed:** open **«Подробности» (Details)**. The log is saved as `helper.log` in the helper's data folder.
+- **Preparation failed:** open **Details**. The log is saved as `helper.log` in the helper's data folder.
 - **A newer Horizon build is incompatible:** use a build whose `research-lock.json` specifies Minecraft 26.3.
 - **Launching a prepared game fails:** run preparation again if you have moved or deleted Horizon files.
 
 To uninstall, remove the EXE and desktop shortcut. You can also remove the helper's data folder if desired. Game worlds are stored separately in the game folder.
 
 Remove personal paths and other private information before attaching logs to a public issue.
+
+The language preference is stored separately in `ui-settings.json` in the helper's data folder. Changing it keeps your prepared game configuration. Windows file dialogs and diagnostic output from external programs may use their own language.
 
 ## Building from source
 
@@ -63,7 +66,7 @@ You need Windows, PowerShell, and .NET Framework 4.8. Visual Studio and third-pa
 .\build.ps1 -Test
 ```
 
-The executable is written to `bin\Horizon-offine-helper.exe`. The `-Test` option runs the built-in checks for file discovery, hashes, path handling, ZIP extraction, Windows arguments, shortcuts, and child-process cancellation. These checks use temporary test data; they do not download or launch the game.
+The executable is written to `bin\Horizon-offine-helper.exe`. The `-Test` option runs 19 built-in checks for file discovery, hashes, path handling, ZIP extraction, Windows arguments, shortcuts, child-process cancellation, and language preferences. These checks use temporary test data; they do not download or launch the game.
 
 To create a release package:
 
@@ -73,7 +76,7 @@ To create a release package:
 
 The archive and its SHA-256 checksum are written to `dist`. The included GitHub Actions workflow builds the application, runs the built-in checks, and uploads a Windows package as an artifact. Actual game startup is verified separately on a machine with Minecraft and Horizon installed.
 
-See the [publishing guide (Russian)](docs/PUBLISHING.md) and [changelog (Russian)](CHANGELOG.md).
+See the [publishing guide (Russian)](docs/PUBLISHING.md) and [changelog](CHANGELOG.md).
 
 ## License and credits
 

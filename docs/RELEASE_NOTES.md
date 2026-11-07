@@ -1,13 +1,13 @@
-# Horizon-offine-helper 1.0.0
+# Horizon-offine-helper 1.1.0
 
-Первый выпуск помощника для запуска Horizon из существующих файлов Minecraft 26.3.
+English and Russian interfaces are now available. On first launch, choose your language; English is selected by default. Your choice is saved, and you can change it using **English / Русский** in the main window.
 
-Выберите папку своего лаунчера, экземпляра или версии и нажмите **«Подготовить и играть»**. Программа найдёт оригинальный клиент, подготовит ресурсы через официальный Horizon Launcher и создаст ярлык для следующего запуска.
+Preparation progress, validation, and helper error messages follow the selected language. The language setting is stored separately from your prepared game configuration.
 
-**Требования:** Windows 10/11 x64, .NET Framework 4.8, установленный оригинальный клиент Minecraft 26.3 и интернет для первой подготовки.
+Download `Horizon-offine-helper-1.1.0-windows.zip`, extract it, and open `Horizon-offine-helper.exe`. Select a Minecraft 26.3 folder and click **Prepare and play**.
 
-**Проверено:** 13 встроенных проверок, подготовка из Prism Launcher, поиск переименованного клиента в произвольной папке и запуск главного меню Horizon без ошибок. Другие лаунчеры используют общий поиск по контрольной сумме.
+**Requirements:** Windows 10/11 x64, .NET Framework 4.8, the original Minecraft 26.3 client, and internet during initial preparation.
 
-Скачайте `Horizon-offine-helper-1.0.0-windows.zip`, распакуйте и откройте `Horizon-offine-helper.exe`.
+**Validation:** 19 built-in checks pass, including language persistence, English fallback, and localized progress/error checks. The preparation backend was previously verified with Prism Launcher and main-menu startup in Horizon.
 
-Код помощника — MIT. Horizon и Minecraft распространяются отдельно; их файлы в архив не входят.
+The helper is MIT licensed. Horizon and Minecraft are distributed separately and are not bundled.
