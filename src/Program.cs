@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-[assembly: AssemblyTitle("Horizon Folder Helper")]
+[assembly: AssemblyTitle("Horizon-offine-helper")]
 [assembly: AssemblyDescription("Подготовка Horizon из файлов Minecraft 26.3 любого лаунчера")]
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
@@ -65,9 +65,9 @@ namespace HorizonFolderHelper {
         CancellationTokenSource cancellation; ReadyGame ready; bool busy,closingAfterCancel;
         readonly Color purple=Color.FromArgb(108,67,218);
         public MainWindow() {
-            Text="Horizon · Подготовка и запуск"; StartPosition=FormStartPosition.CenterScreen; ClientSize=new Size(780,476); MinimumSize=new Size(796,515);
+            Text="Horizon-offine-helper · Подготовка и запуск"; StartPosition=FormStartPosition.CenterScreen; ClientSize=new Size(780,476); MinimumSize=new Size(796,515);
             Font=new Font("Segoe UI",10); BackColor=Color.FromArgb(246,247,251); AutoScaleMode=AutoScaleMode.Dpi;
-            var title=new Label { Text="Horizon",Font=new Font("Segoe UI",24,FontStyle.Bold),ForeColor=Color.FromArgb(31,31,45),AutoSize=true,Location=new Point(28,22) }; Controls.Add(title);
+            var title=new Label { Text="Horizon-offine-helper",Font=new Font("Segoe UI",24,FontStyle.Bold),ForeColor=Color.FromArgb(31,31,45),AutoSize=true,Location=new Point(28,22) }; Controls.Add(title);
             var subtitle=new Label { Text="Minecraft 26.3 из любого лаунчера",AutoSize=true,ForeColor=Color.FromArgb(102,104,119),Location=new Point(31,77) }; Controls.Add(subtitle);
             var card=new Panel {BackColor=Color.White,Location=new Point(28,119),Size=new Size(724,139),Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right}; Controls.Add(card);
             card.Controls.Add(new Label {Text="Папка с Minecraft 26.3",AutoSize=true,Location=new Point(18,17),Font=new Font("Segoe UI",10,FontStyle.Bold)});
@@ -112,7 +112,7 @@ namespace HorizonFolderHelper {
             string folder=source.Text; bool shortcut=desktop.Checked; cancellation=new CancellationTokenSource(); var token=cancellation.Token; SetBusy(true); status.Text="Начинаю подготовку…";
             Task.Run(delegate { var core=new HelperCore(HelperCore.DefaultHome,Log,token); ReadyGame result=core.Prepare(folder);
                 token.ThrowIfCancellationRequested();
-                if(shortcut) { string stable=Path.Combine(HelperCore.DefaultHome,"Horizon Folder Helper.exe"); string current=Application.ExecutablePath;
+                if(shortcut) { string stable=Path.Combine(HelperCore.DefaultHome,"Horizon-offine-helper.exe"); string current=Application.ExecutablePath;
                     try {
                         if(!String.Equals(Path.GetFullPath(current),Path.GetFullPath(stable),StringComparison.OrdinalIgnoreCase) && (!File.Exists(stable)||HelperCore.Hash(stable,"SHA256")!=HelperCore.Hash(current,"SHA256"))) File.Copy(current,stable,true);
                         HelperCore.Shortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),"Horizon 26.3.lnk"),stable);

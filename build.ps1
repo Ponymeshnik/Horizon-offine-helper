@@ -14,7 +14,7 @@ if (-not (Test-Path -LiteralPath $helperCompiler)) {
     $helperCompiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 }
 if (-not (Test-Path -LiteralPath $helperCompiler)) { throw 'Install .NET Framework 4.8 before building.' }
-$helperExecutable = Join-Path $helperOutput 'Horizon Folder Helper.exe'
+$helperExecutable = Join-Path $helperOutput 'Horizon-offine-helper.exe'
 $helperSource = Join-Path $PSScriptRoot 'src'
 $compilerArguments = @(
     '/nologo', '/target:winexe', '/optimize+', '/platform:anycpu', '/utf8output', '/codepage:65001',

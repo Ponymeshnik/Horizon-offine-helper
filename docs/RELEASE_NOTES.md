@@ -1,4 +1,4 @@
-# Horizon Folder Helper 1.0.0
+# Horizon-offine-helper 1.0.0
 
 Первый выпуск помощника для запуска Horizon из существующих файлов Minecraft 26.3.
 
@@ -8,6 +8,6 @@
 
 **Проверено:** 13 встроенных проверок, подготовка из Prism Launcher, поиск переименованного клиента в произвольной папке и запуск главного меню Horizon без ошибок. Другие лаунчеры используют общий поиск по контрольной сумме.
 
-Скачайте `HorizonFolderHelper-1.0.0-windows.zip`, распакуйте и откройте `Horizon Folder Helper.exe`.
+Скачайте `Horizon-offine-helper-1.0.0-windows.zip`, распакуйте и откройте `Horizon-offine-helper.exe`.
 
 Код помощника — MIT. Horizon и Minecraft распространяются отдельно; их файлы в архив не входят.

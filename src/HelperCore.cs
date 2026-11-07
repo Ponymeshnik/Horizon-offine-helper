@@ -78,7 +78,7 @@ namespace HorizonFolderHelper {
         byte[] GetBytes(string url) {
             Cancel.ThrowIfCancellationRequested();
             if(!url.StartsWith("https://",StringComparison.OrdinalIgnoreCase)) throw new IOException("Разрешена только защищённая загрузка HTTPS.");
-            var request=(HttpWebRequest)WebRequest.Create(url); request.UserAgent="HorizonFolderHelper/1.0"; request.Timeout=90000; request.ReadWriteTimeout=90000;
+            var request=(HttpWebRequest)WebRequest.Create(url); request.UserAgent="Horizon-offine-helper/1.0"; request.Timeout=90000; request.ReadWriteTimeout=90000;
             request.AutomaticDecompression=DecompressionMethods.GZip|DecompressionMethods.Deflate;
             using(Cancel.Register(delegate { request.Abort(); })) using(var response=request.GetResponse()) using(var stream=response.GetResponseStream()) using(var memory=new MemoryStream()) {
                 byte[] buffer=new byte[81920]; int count; while((count=stream.Read(buffer,0,buffer.Length))>0) { Cancel.ThrowIfCancellationRequested(); memory.Write(buffer,0,count); } return memory.ToArray();

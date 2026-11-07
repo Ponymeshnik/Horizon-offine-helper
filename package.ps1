@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = Join-Path $PSScriptRoot 'dist' }
-$helperExecutable = Join-Path $PSScriptRoot 'bin\Horizon Folder Helper.exe'
+$helperExecutable = Join-Path $PSScriptRoot 'bin\Horizon-offine-helper.exe'
 if (-not $SkipBuild) { & (Join-Path $PSScriptRoot 'build.ps1') -Test }
 if (-not (Test-Path -LiteralPath $helperExecutable)) { throw 'Run build.ps1 before packaging.' }
 $helperVersion = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim()
@@ -16,7 +16,7 @@ if ([System.Diagnostics.FileVersionInfo]::GetVersionInfo($helperExecutable).File
 }
 $helperDist = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $helperDist -Force | Out-Null
-$helperArchive = Join-Path $helperDist ('HorizonFolderHelper-' + $helperVersion + '-windows.zip')
+$helperArchive = Join-Path $helperDist ('Horizon-offine-helper-' + $helperVersion + '-windows.zip')
 $helperFiles = @($helperExecutable)
 foreach ($helperName in @('README.md', 'LICENSE', 'CHANGELOG.md', 'Как пользоваться.txt')) {
     $helperFiles += Join-Path $PSScriptRoot $helperName
